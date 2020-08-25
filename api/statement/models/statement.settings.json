@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "statements",
+  "info": {
+    "name": "statement"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true
+  },
+  "attributes": {
+    "stored": {
+      "type": "datetime"
+    },
+    "timestamp": {
+      "type": "datetime"
+    },
+    "actor": {
+      "type": "json"
+    },
+    "verb": {
+      "type": "json"
+    },
+    "object": {
+      "type": "json"
+    },
+    "result": {
+      "type": "json"
+    },
+    "context": {
+      "type": "json"
+    },
+    "authority": {
+      "type": "json"
+    },
+    "version": {
+      "type": "string"
+    },
+    "attachments": {
+      "type": "string"
+    }
+  }
+}
