@@ -9,34 +9,123 @@
     "timestamps": true
   },
   "attributes": {
+    "object_agent": {
+      "via": "object_statements",
+      "model": "agent"
+    },
+    "object_activity": {
+      "via": "object_statements",
+      "model": "activity"
+    },
+    "object_substatement": {
+      "via": "object_statements",
+      "model": "substatement"
+    },
+    "object_statementref": {
+      "type": "uid"
+    },
+    "actor": {
+      "via": "actor_statements",
+      "model": "agent"
+    },
+    "verb": {
+      "model": "verb",
+      "via": "verb_statements"
+    },
+    "result_success": {
+      "type": "boolean"
+    },
+    "result_completion": {
+      "type": "boolean"
+    },
+    "result_response": {
+      "type": "string"
+    },
+    "result_duration": {
+      "type": "text"
+    },
+    "result_score_scaled": {
+      "type": "float"
+    },
+    "result_score_raw": {
+      "type": "float"
+    },
+    "result_score_min": {
+      "type": "float"
+    },
+    "result_score_max": {
+      "type": "float"
+    },
+    "result_extensions": {
+      "type": "json"
+    },
     "stored": {
       "type": "datetime"
     },
     "timestamp": {
       "type": "datetime"
     },
-    "actor": {
-      "type": "json"
-    },
-    "verb": {
-      "type": "json"
-    },
-    "object": {
-      "type": "json"
-    },
-    "result": {
-      "type": "json"
-    },
-    "context": {
-      "type": "json"
-    },
     "authority": {
-      "type": "json"
+      "via": "authority_statements",
+      "model": "agent"
     },
-    "version": {
+    "voided": {
+      "type": "boolean"
+    },
+    "context_registration": {
       "type": "string"
     },
-    "attachments": {
+    "context_instructor": {
+      "via": "context_instructor_statements",
+      "model": "agent"
+    },
+    "context_team": {
+      "via": "context_team_statements",
+      "model": "agent"
+    },
+    "context_revision": {
+      "type": "string"
+    },
+    "context_platform": {
+      "type": "string"
+    },
+    "context_language": {
+      "type": "string"
+    },
+    "context_extensions": {
+      "type": "json"
+    },
+    "context_ca_parent": {
+      "via": "context_ca_parent_statements",
+      "collection": "activity",
+      "dominant": true
+    },
+    "context_ca_grouping": {
+      "via": "context_ca_grouping_statements",
+      "collection": "activity",
+      "dominant": true
+    },
+    "context_ca_categories": {
+      "via": "context_ca_category_statements",
+      "collection": "activity",
+      "dominant": true
+    },
+    "context_ca_other": {
+      "via": "context_ca_other_statements",
+      "collection": "activity",
+      "dominant": true
+    },
+    "context_statement": {
+      "type": "string"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user"
+    },
+    "full_statement": {
+      "type": "json"
+    },
+    "cid": {
       "type": "string"
     }
   }

@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/substatements",
+      "handler": "substatement.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/substatements/count",
+      "handler": "substatement.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/substatements/:id",
+      "handler": "substatement.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/substatements",
+      "handler": "substatement.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/substatements/:id",
+      "handler": "substatement.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/substatements/:id",
+      "handler": "substatement.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

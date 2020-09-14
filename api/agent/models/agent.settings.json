@@ -1,0 +1,71 @@
+{
+  "kind": "collectionType",
+  "collectionName": "agents",
+  "info": {
+    "name": "agent"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true
+  },
+  "attributes": {
+    "objectType": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "mbox": {
+      "type": "string"
+    },
+    "mbox_sha1sum": {
+      "type": "string"
+    },
+    "openid": {
+      "type": "string"
+    },
+    "oauth_identifier": {
+      "type": "string"
+    },
+    "members": {
+      "collection": "agent",
+      "via": "selfmembers",
+      "dominant": true
+    },
+    "selfmembers": {
+      "collection": "agent",
+      "via": "members"
+    },
+    "object_statements": {
+      "collection": "statement",
+      "via": "object_agent"
+    },
+    "actor_statements": {
+      "collection": "statement",
+      "via": "actor"
+    },
+    "authority_statements": {
+      "collection": "statement",
+      "via": "authority"
+    },
+    "context_instructor_statements": {
+      "collection": "statement",
+      "via": "context_instructor"
+    },
+    "context_team_statements": {
+      "collection": "statement",
+      "via": "context_team"
+    },
+    "cid": {
+      "type": "string"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "user_agent"
+    },
+    "account": {
+      "type": "json"
+    }
+  }
+}

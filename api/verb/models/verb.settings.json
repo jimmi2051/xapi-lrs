@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "verbs",
+  "info": {
+    "name": "verb"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true
+  },
+  "attributes": {
+    "verb_id": {
+      "type": "string",
+      "unique": true,
+      "maxLength": 2093
+    },
+    "canonical_data": {
+      "type": "json"
+    },
+    "verb_statements": {
+      "via": "verb",
+      "collection": "statement"
+    }
+  }
+}

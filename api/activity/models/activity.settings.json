@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "activities",
+  "info": {
+    "name": "activity"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true
+  },
+  "attributes": {
+    "activity_id": {
+      "type": "string",
+      "unique": true,
+      "maxLength": 2093
+    },
+    "canonical_data": {
+      "type": "json"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "user_activity"
+    },
+    "object_statements": {
+      "collection": "statement",
+      "via": "object_activity"
+    },
+    "context_ca_parent_statements": {
+      "collection": "statement",
+      "via": "context_ca_parent"
+    },
+    "context_ca_grouping_statements": {
+      "collection": "statement",
+      "via": "context_ca_grouping"
+    },
+    "context_ca_category_statements": {
+      "collection": "statement",
+      "via": "context_ca_categories"
+    },
+    "context_ca_other_statements": {
+      "collection": "statement",
+      "via": "context_ca_other"
+    },
+    "cid": {
+      "type": "string"
+    }
+  }
+}

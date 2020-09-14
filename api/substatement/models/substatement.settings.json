@@ -1,0 +1,76 @@
+{
+  "kind": "collectionType",
+  "collectionName": "substatements",
+  "info": {
+    "name": "substatement"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true
+  },
+  "attributes": {
+    "object_statementref": {
+      "type": "uid"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "substatements"
+    },
+    "result_success": {
+      "type": "boolean"
+    },
+    "result_completion": {
+      "type": "boolean"
+    },
+    "result_response": {
+      "type": "text"
+    },
+    "result_duration": {
+      "type": "string"
+    },
+    "result_score_scaled": {
+      "type": "decimal"
+    },
+    "result_score_raw": {
+      "type": "decimal"
+    },
+    "result_score_min": {
+      "type": "float"
+    },
+    "result_score_max": {
+      "type": "float"
+    },
+    "result_extensions": {
+      "type": "json"
+    },
+    "timestamp": {
+      "type": "datetime"
+    },
+    "context_registration": {
+      "type": "string"
+    },
+    "context_revision": {
+      "type": "string"
+    },
+    "context_platform": {
+      "type": "string"
+    },
+    "context_language": {
+      "type": "string"
+    },
+    "context_extensions": {
+      "type": "json"
+    },
+    "context_statement": {
+      "type": "string"
+    },
+    "object_statements": {
+      "collection": "statement",
+      "via": "object_substatement"
+    },
+    "cid": {
+      "type": "string"
+    }
+  }
+}
