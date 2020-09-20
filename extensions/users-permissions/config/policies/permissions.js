@@ -86,6 +86,18 @@ module.exports = async (ctx, next) => {
         })
       );
     } else {
+      let { request } = ctx;
+      request.auth = {};
+      request.auth.endpoint = request.url;
+      (request.oauthToken = strapi.plugins[
+        "users-permissions"
+      ].services.jwt.issue({
+        id: user.id,
+      })),
+        (request.auth.type = "http");
+      request.auth.user = user;
+      request.auth.agent = user.user_agent;
+      request.auth.define = true;
       return next();
     }
   } catch (e) {

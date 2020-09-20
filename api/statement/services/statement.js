@@ -7,7 +7,8 @@
 
 module.exports = {
   async create(data, { files } = {}) {
-    console.log("data ==>", data);
+    console.log(33333);
+    // console.log("data ==>", data);
 
     if ("actor" in data) {
       const { actor } = data;
@@ -16,17 +17,25 @@ module.exports = {
     }
 
     if ("object" in data) {
-      const { object } = data;
-      let object_activity = {
-        cid: object.cid,
-        canonical_data: object.canonical_data ? object.canonical_data : {},
-      };
-      const entryActivity = await strapi
-        .query("activity")
-        .create(object_activity);
-      object_activity._id = entryActivity.id;
-      data.object_activity = object_activity;
-      delete data.object;
+      const statementObjectData = data.object;
+      const validAgentObjects = ["Agent", "Group"];
+      if (
+        !("objectType" in statementObjectData) ||
+        statementObjectData.objectType === "Activity"
+      ) {
+        statementObjectData.objectType = "Activity";
+      }
+      // const { object } = data;
+      // let object_activity = {
+      //   cid: object.cid,
+      //   canonical_data: object.canonical_data ? object.canonical_data : {},
+      // };
+      // const entryActivity = await strapi
+      //   .query("activity")
+      //   .create(object_activity);
+      // object_activity._id = entryActivity.id;
+      // data.object_activity = object_activity;
+      // delete data.object;
     }
 
     if ("verb" in data) {
@@ -36,7 +45,7 @@ module.exports = {
       data.verb._id = entryVerb.id;
     }
 
-    console.log("========>", data);
+    // console.log("========>", data);
     // if("context" in data) {
     //   const {context} = data;
     // }
