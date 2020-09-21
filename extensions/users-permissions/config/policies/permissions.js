@@ -98,6 +98,10 @@ module.exports = async (ctx, next) => {
       request.auth.user = user;
       request.auth.agent = user.user_agent;
       request.auth.define = true;
+      request.body.authority = user.user_agent;
+      request.body.full_statement = {
+        authority: user.user_agent,
+      };
       return next();
     }
   } catch (e) {

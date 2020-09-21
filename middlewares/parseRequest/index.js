@@ -8,7 +8,7 @@ const parseRequest = (request, moreId = null) => {
   const rObj = {};
 
   rObj.headers = getHeaders(request.headers);
-  console.log("request.headers ==>", request.secure);
+
   rObj.params = {};
   if (request.method === "POST" && request.query.method) {
     // parse CORS
@@ -163,7 +163,7 @@ module.exports = (strapi) => {
         if (path.includes("statement")) {
           // await someAsyncCode()
           // console.log("ctx ==>", ctx.request);
-          console.log(222222);
+
           parseRequest(ctx.request);
 
           if (path[path.length - 1] === "/") {

@@ -7,24 +7,37 @@
 
 module.exports = {
   async create(data, { files } = {}) {
-    console.log(33333);
-    // console.log("data ==>", data);
+    // console.log(33333);
+    console.log("create ==>", data);
 
-    if ("actor" in data) {
+    if (data.actor) {
       const { actor } = data;
       const entryActor = await strapi.query("agent").create(actor);
       data.actor._id = entryActor.id;
     }
 
-    if ("object" in data) {
+    if (data.object) {
       const statementObjectData = data.object;
-      const validAgentObjects = ["Agent", "Group"];
       if (
-        !("objectType" in statementObjectData) ||
-        statementObjectData.objectType === "Activity"
+        statementObjectData.objectType === "Group" ||
+        statementObjectData.objectType === "Agent"
       ) {
-        statementObjectData.objectType = "Activity";
+        const agent = await strapi.query("agent").create(statementObjectData);
+        data.object_agent = agent;
       }
+      if (statementObjectData.objectType === "Activity") {
+        const activity = await strapi
+          .query("activity")
+          .create(statementObjectData);
+        data.object_activity = activity;
+      }
+      if (statementObjectData.objectType === "SubStatement") {
+        // Continue process with substatement
+      }
+      if (statementObjectData.objectType === "StatementRef") {
+        data.object_statementref = statement_object_data.id;
+      }
+      delete data.object;
       // const { object } = data;
       // let object_activity = {
       //   cid: object.cid,
@@ -40,15 +53,24 @@ module.exports = {
 
     if ("verb" in data) {
       let { verb } = data;
-      verb = { verb_id: verb.cid, caninical_data: { ...verb } };
-      const entryVerb = await strapi.query("verb").create(verb);
-      data.verb._id = entryVerb.id;
+      const queryVerb = await strapi
+        .query("verb")
+        .findOne({ verb_id: verb.cid });
+      if (queryVerb) {
+        console.log("query ===>", queryVerb);
+        data.verb._id = queryVerb.id;
+      } else {
+        verb = { verb_id: verb.cid, caninical_data: { ...verb } };
+        const entryVerb = await strapi.query("verb").create(verb);
+        data.verb._id = entryVerb.id;
+      }
     }
 
     // console.log("========>", data);
     // if("context" in data) {
     //   const {context} = data;
     // }
+    console.log("data ==>", data);
     const entry = await strapi.query("statement").create(data);
 
     if (files) {
