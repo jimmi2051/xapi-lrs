@@ -2,7 +2,7 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/statements",
+      "path": "/xapi/statements",
       "handler": "statement.find",
       "config": {
         "policies": []
@@ -10,7 +10,7 @@
     },
     {
       "method": "GET",
-      "path": "/statements/count",
+      "path": "/xapi/statements/count",
       "handler": "statement.count",
       "config": {
         "policies": []
@@ -18,7 +18,7 @@
     },
     {
       "method": "GET",
-      "path": "/statements/:id",
+      "path": "/xapi/statements/:id",
       "handler": "statement.findOne",
       "config": {
         "policies": []
@@ -26,7 +26,7 @@
     },
     {
       "method": "POST",
-      "path": "/statements",
+      "path": "/xapi/statements",
       "handler": "statement.create",
       "config": {
         "policies": []
@@ -34,7 +34,7 @@
     },
     {
       "method": "PUT",
-      "path": "/statements/:id",
+      "path": "/xapi/statements/:id",
       "handler": "statement.update",
       "config": {
         "policies": []
@@ -42,7 +42,7 @@
     },
     {
       "method": "DELETE",
-      "path": "/statements/:id",
+      "path": "/xapi/statements/:id",
       "handler": "statement.delete",
       "config": {
         "policies": []
