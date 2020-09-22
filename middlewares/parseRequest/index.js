@@ -161,9 +161,6 @@ module.exports = (strapi) => {
       strapi.app.use(async (ctx, next) => {
         const path = ctx.request.url;
         if (path.includes("statement")) {
-          // await someAsyncCode()
-          // console.log("ctx ==>", ctx.request);
-
           parseRequest(ctx.request);
 
           if (path[path.length - 1] === "/") {

@@ -5,11 +5,22 @@
  * to customize this service
  */
 
+const _ = require("lodash");
+
+const popObject = (obj, attr) => {
+  if (attr in obj) {
+    const result = obj[attr];
+    if (!delete obj[result]) {
+      throw new Error();
+    }
+    return result;
+  } else {
+    return "";
+  }
+};
+
 module.exports = {
   async create(data, { files } = {}) {
-    // console.log(33333);
-    console.log("create ==>", data);
-
     if (data.actor) {
       const { actor } = data;
       const entryActor = await strapi.query("agent").create(actor);
@@ -26,6 +37,8 @@ module.exports = {
         data.object_agent = agent;
       }
       if (statementObjectData.objectType === "Activity") {
+        statementObjectData.activity_id = statementObjectData.cid;
+        statementObjectData.canonical_data = { ...statementObjectData };
         const activity = await strapi
           .query("activity")
           .create(statementObjectData);
@@ -33,31 +46,23 @@ module.exports = {
       }
       if (statementObjectData.objectType === "SubStatement") {
         // Continue process with substatement
+        const subStatement = await strapi
+          .query("substatement")
+          .create(statementObjectData);
+        data.object_substatement = subStatement;
       }
       if (statementObjectData.objectType === "StatementRef") {
-        data.object_statementref = statement_object_data.id;
+        data.object_statementref = statementObjectData.cid;
       }
       delete data.object;
-      // const { object } = data;
-      // let object_activity = {
-      //   cid: object.cid,
-      //   canonical_data: object.canonical_data ? object.canonical_data : {},
-      // };
-      // const entryActivity = await strapi
-      //   .query("activity")
-      //   .create(object_activity);
-      // object_activity._id = entryActivity.id;
-      // data.object_activity = object_activity;
-      // delete data.object;
     }
 
-    if ("verb" in data) {
+    if (data.verb) {
       let { verb } = data;
       const queryVerb = await strapi
         .query("verb")
         .findOne({ verb_id: verb.cid });
       if (queryVerb) {
-        console.log("query ===>", queryVerb);
         data.verb._id = queryVerb.id;
       } else {
         verb = { verb_id: verb.cid, caninical_data: { ...verb } };
@@ -65,12 +70,76 @@ module.exports = {
         data.verb._id = entryVerb.id;
       }
     }
+    //Process case Context
+    if (data.context) {
+      const { context } = data;
+      for (let key in context) {
+        // skip loop if the property is from prototype
+        if (!context.hasOwnProperty(key)) continue;
 
-    // console.log("========>", data);
-    // if("context" in data) {
-    //   const {context} = data;
+        let obj = context[key];
+        data["context_" + key] = obj;
+      }
+      if (data.context_instructor) {
+        const context_instructor = await strapi
+          .query("agent")
+          .create(data.context_instructor);
+        data.context_instructor = context_instructor;
+      }
+      if (data.context_team) {
+        const context_team = await strapi
+          .query("agent")
+          .create(data.context_team);
+        data.context_team = context_team;
+      }
+      if (data.context_statement) {
+        data.context_statement = data.context_statement.cid;
+      }
+    }
+    // Case have result
+    if (data.result) {
+      const { result } = data;
+      for (let key in result) {
+        // skip loop if the property is from prototype
+        if (!result.hasOwnProperty(key)) continue;
+        let obj = result[key];
+        data["result_" + key] = obj;
+      }
+      if (data.result_score) {
+        for (let result_score in data) {
+          // skip loop if the property is from prototype
+          if (!result.hasOwnProperty(key)) continue;
+          let obj = data[key];
+          data["result_score_" + key] = obj;
+        }
+        delete data.result.score;
+        delete data.result_core;
+      }
+    }
+    // // Context Acitvites ==>
+    // if (data.context_contextActivities) {
+    //   const con_act_data = popObject(data, "context_contextActivities");
+    //   delete data.objectType;
+    //   const subStatement = await strapi.query("substatement").create(data);
+    //   if(!_.isEmpty(con_act_data))
+    //   {
+    //     for (let key in con_act_data) {
+    //       // skip loop if the property is from prototype
+    //       if (!con_act_data.hasOwnProperty(key)) continue;
+    //       let obj = con_act_data[key];
+    //       if(_.isArray(obj[1]))
+    //       {
+    //         for(let i = 0; i < obj[1].length ; i++)
+    //         {
+    //           let con_act = obj[1][i];
+    //           act =
+    //         }
+    //       }
+    //     }
+    //   }
+    //   data.object_substatement = subStatement;
     // }
-    console.log("data ==>", data);
+    data.full_statement = { ...data };
     const entry = await strapi.query("statement").create(data);
 
     if (files) {
