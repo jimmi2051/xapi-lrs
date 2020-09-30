@@ -19,14 +19,154 @@ const popObject = (obj, attr) => {
   }
 };
 
+const validateNotNullVer2 = (object) => {
+  for (let key in object) {
+    // skip loop if the property is from prototype
+    if (!object.hasOwnProperty(key)) continue;
+    if (_.isNull(object[key])) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const validateNotNull = (object) => {
+  console.log("log ===>", object);
+  let check = true;
+  for (let key in object) {
+    // skip loop if the property is from prototype
+    if (!object.hasOwnProperty(key)) continue;
+    if (key === "extensions") continue;
+    if (check === false) continue;
+    if (_.isObject(object[key])) {
+      // console.log("111", key);
+      check = validateNotNull(object[key]);
+    } else {
+      // console.log("222", _.isNull(object[key]));
+      if (_.isNull(object[key])) {
+        check = false;
+      }
+    }
+
+    // return true;
+  }
+  return check;
+  // return true;
+  // for (let key in object.actor) {
+  //   // skip loop if the property is from prototype
+  //   if (!object.actor.hasOwnProperty(key)) continue;
+  //   if (object.actor[key] === null || object.actor[key] === undefined) {
+  //     return false;
+  //   }
+  // }
+  // for (let key in object.verb) {
+  //   // skip loop if the property is from prototype
+  //   if (!object.verb.hasOwnProperty(key)) continue;
+  //   if (object.verb[key] === null || object.verb[key] === undefined) {
+  //     return false;
+  //   }
+  // }
+  // for (let key in object.object) {
+  //   // skip loop if the property is from prototype
+  //   if (!object.object.hasOwnProperty(key)) continue;
+  //   if (object.object[key] === null || object.object[key] === undefined) {
+  //     return false;
+  //   }
+  // }
+  // return true;
+};
+
+const statementAllowedFields = [
+  "id",
+  "actor",
+  "verb",
+  "object",
+  "result",
+  "stored",
+  "context",
+  "timestamp",
+  "authority",
+  "version",
+  "attachments",
+  "full_statement",
+  "cid",
+];
+const statementRequiredFields = ["actor", "verb", "object"];
+const validateAllowedFields = (allowed, object) => {
+  for (let key in object) {
+    if (!object.hasOwnProperty(key)) continue;
+    if (allowed.findIndex((allow) => allow === key) === -1) {
+      return false;
+    }
+  }
+  return true;
+};
+const validateRequiredFields = (required, object) => {
+  for (let index in required) {
+    const require = required[index];
+    if (!object[require]) {
+      return false;
+    }
+  }
+  return true;
+};
+const validateStatement = (statement) => {
+  if (!_.isObject(statement)) {
+    return {
+      status: false,
+      message: "Statement is not a properly formatted dictionary.",
+    };
+  }
+  if (!validateAllowedFields(statementAllowedFields, statement)) {
+    return {
+      status: false,
+      message: "Some field is incorrect. ",
+    };
+  }
+  if (!validateRequiredFields(statementRequiredFields, statement)) {
+    return {
+      status: false,
+      message: "Statement missing field. Required: object, verb, actor ",
+    };
+  }
+  if (statement.version) {
+    if (_.isString(statement.version)) {
+      //
+    } else {
+      return {
+        status: false,
+        message: "Version must be a string.",
+      };
+    }
+  }
+
+  if (
+    !validateNotNull(statement.actor) ||
+    !validateNotNull(statement.verb) ||
+    !validateNotNull(statement.object) ||
+    !validateNotNull(statement.context)
+  ) {
+    return {
+      status: false,
+      message: "Data not allow null.",
+    };
+  }
+  return {
+    status: true,
+  };
+};
+
 module.exports = {
   async create(data, { files } = {}) {
+    const validated = validateStatement(data);
+    if (validated.status === false) {
+      return validated;
+    }
     if (data.actor) {
       const { actor } = data;
       const entryActor = await strapi.query("agent").create(actor);
       data.actor._id = entryActor.id;
     }
-
     if (data.object) {
       const statementObjectData = data.object;
       if (
@@ -37,12 +177,19 @@ module.exports = {
         data.object_agent = agent;
       }
       if (statementObjectData.objectType === "Activity") {
-        statementObjectData.activity_id = statementObjectData.cid;
-        statementObjectData.canonical_data = { ...statementObjectData };
-        const activity = await strapi
+        const queryActivity = await strapi
           .query("activity")
-          .create(statementObjectData);
-        data.object_activity = activity;
+          .findOne({ activity_id: statementObjectData.cid });
+        if (queryActivity && queryActivity._id) {
+          data.object_activity = queryActivity;
+        } else {
+          statementObjectData.activity_id = statementObjectData.cid;
+          statementObjectData.canonical_data = { ...statementObjectData };
+          const activity = await strapi
+            .query("activity")
+            .create(statementObjectData);
+          data.object_activity = activity;
+        }
       }
       if (statementObjectData.objectType === "SubStatement") {
         // Continue process with substatement
@@ -108,9 +255,9 @@ module.exports = {
       if (data.result_score) {
         for (let result_score in data) {
           // skip loop if the property is from prototype
-          if (!result.hasOwnProperty(key)) continue;
-          let obj = data[key];
-          data["result_score_" + key] = obj;
+          if (!result.hasOwnProperty(result_score)) continue;
+          let obj = data[result_score];
+          data["result_score_" + result_score] = obj;
         }
         delete data.result.score;
         delete data.result_core;
@@ -139,7 +286,7 @@ module.exports = {
     //   }
     //   data.object_substatement = subStatement;
     // }
-    data.full_statement = { ...data };
+    // data.full_statement = { ...data };
     const entry = await strapi.query("statement").create(data);
 
     if (files) {
@@ -152,5 +299,12 @@ module.exports = {
     }
 
     return entry;
+  },
+  find(params, populate) {
+    if (params.statementId) {
+      params.cid = params.statementId;
+      delete params.statementId;
+    }
+    return strapi.query("statement").find(params, populate);
   },
 };

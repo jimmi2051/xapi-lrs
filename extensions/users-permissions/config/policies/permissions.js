@@ -89,19 +89,20 @@ module.exports = async (ctx, next) => {
       let { request } = ctx;
       request.auth = {};
       request.auth.endpoint = request.url;
-      (request.oauthToken = strapi.plugins[
+      request.oauthToken = strapi.plugins[
         "users-permissions"
       ].services.jwt.issue({
         id: user.id,
-      })),
-        (request.auth.type = "http");
+      });
+      request.auth.type = "http";
       request.auth.user = user;
-      request.auth.agent = user.user_agent;
+      request.auth.agent = user.user_agent ? user.user_agent : user;
       request.auth.define = true;
-      request.body.authority = user.user_agent;
-      request.body.full_statement = {
-        authority: user.user_agent,
-      };
+      // request.body.authority = user.user_agent ? user.user_agent : user;
+      // request.body.full_statement = {
+      //   authority: user,
+      // };
+
       return next();
     }
   } catch (e) {

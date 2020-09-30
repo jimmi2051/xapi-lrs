@@ -144,41 +144,57 @@ const replaceIdToCid = (object) => {
   for (let key in object) {
     // skip loop if the property is from prototype
     if (!object.hasOwnProperty(key)) continue;
-
     if (key === "id") {
       object.cid = object.id;
       delete object.id;
+    } else {
+      const newKey = replaceAll(key, ".", "_");
+      if (newKey !== key) {
+        object[newKey] = object[key];
+        delete object[key];
+      }
+      if (_.isObject(object[newKey])) {
+        replaceIdToCid(object[newKey]);
+      }
     }
-    if (_.isObject(object[key])) {
-      replaceIdToCid(object[key]);
-    }
+
+    // if (key.includes(".")) {
+    //   const newKey = replaceAll(key, '.', '.");
+    //   object[newKey] = object[key];
+    //   delete object[key];
+    // }
   }
 };
+
+const replaceAll = (string, search, replace) => {
+  return string.split(search).join(replace);
+};
+
 module.exports = (strapi) => {
   return {
     // can also be async
     initialize() {
       strapi.app.use(async (ctx, next) => {
-        const path = ctx.request.url;
-        if (path.includes("statement")) {
-          parseRequest(ctx.request);
+        // const path = ctx.request.url;
+        // console.log("ctx request body ==>", ctx.request.body);
+        // console.log("ctx request params ==>", ctx.request.params);
+        // console.log("ctx request query ==>", ctx.request.query);
+        // if (path.includes("statement")) {
+        //   parseRequest(ctx.request);
 
-          if (path[path.length - 1] === "/") {
-            path = path.splice(path[path.length - 1], 1);
-          }
-          if (path.includes("more")) {
-            //Need to process cutoff more_id
-          }
-        }
-
-        let body = ctx.request.body;
-        replaceIdToCid(body);
-        if (ctx.request.body.id) {
-          ctx.request.body.cid = ctx.request.body.id;
-          delete ctx.request.body.id;
-        }
+        //   if (path[path.length - 1] === "/") {
+        //     path = path.splice(path[path.length - 1], 1);
+        //   }
+        //   if (path.includes("more")) {
+        //     //Need to process cutoff more_id
+        //   }
+        // }
+        // let body = ctx.request.body;
+        // // console.log("body==>", body);
+        // replaceIdToCid(body);
+        // console.log("body==>", body);
         await next();
-
+        // console.log("ctx response ==>", ctx.response.body);
         // await someAsyncCode()
       });
     },
