@@ -156,12 +156,33 @@ const validateStatement = (statement) => {
   };
 };
 
+const replaceAll = (string, search, replace) => {
+  return string.split(search).join(replace);
+};
+
+const replaceIdToCid = (object) => {
+  for (let key in object) {
+    // skip loop if the property is from prototype
+    if (!object.hasOwnProperty(key)) continue;
+    if (key === "id") {
+      object.cid = object.id;
+      delete object.id;
+    } else {
+      const newKey = replaceAll(key, ".", "_");
+      if (newKey !== key) {
+        object[newKey] = object[key];
+        delete object[key];
+      }
+      if (_.isObject(object[newKey])) {
+        replaceIdToCid(object[newKey]);
+      }
+    }
+  }
+};
+
 module.exports = {
   async create(data, { files } = {}) {
-    const validated = validateStatement(data);
-    if (validated.status === false) {
-      return validated;
-    }
+    // console.log("data ==>", data);
     if (data.actor) {
       const { actor } = data;
       const entryActor = await strapi.query("agent").create(actor);
@@ -263,6 +284,11 @@ module.exports = {
         delete data.result_core;
       }
     }
+    // if (data.id) {
+    //   data.cid = data.id;
+    //   delete data.id;
+    // }
+    replaceIdToCid(data);
     // // Context Acitvites ==>
     // if (data.context_contextActivities) {
     //   const con_act_data = popObject(data, "context_contextActivities");
