@@ -31,7 +31,7 @@ const validateNotNullVer2 = (object) => {
 };
 
 const validateNotNull = (object) => {
-  console.log("log ===>", object);
+  // console.log("log ===>", object);
   let check = true;
   for (let key in object) {
     // skip loop if the property is from prototype

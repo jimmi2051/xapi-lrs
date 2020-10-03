@@ -263,8 +263,151 @@ const validateStatement = (statement) => {
       return isValidateResult;
     }
   }
+  if (statement.context) {
+    let isValidateContext = validateContext(statement.result);
+    if (isValidateContext.status === false) {
+      return isValidateContext;
+    }
+  }
   return result;
 };
+
+const validateContext = (context, stmt_object) => {
+  if (!_.isObject(context)) {
+    return {
+      status: false,
+      message: "Context is not a properly formatted dictionary",
+    };
+  }
+  if (!validateAllowedFields(contextAllowedFields, context)) {
+    return {
+      status: false,
+      message: "Context | Some field is incorrect. ",
+    };
+  }
+  if (context.registration) {
+    if (!uuid.validate(context.registration)) {
+      return {
+        status: false,
+        message: context.registration + " is not a valid UUID",
+      };
+    }
+  }
+  if (context.instructor) {
+    const isValidateAgent = validateAgent(
+      context.instructor,
+      "Context instructor"
+    );
+    if (isValidateAgent.status === false) {
+      return isValidateAgent;
+    }
+  }
+  if (context.team) {
+    const isValidateAgent = validateAgent(context.instructor, "Context Team");
+    if (isValidateAgent.status === false) {
+      return isValidateAgent;
+    }
+    if (!context.team.objectType || context.team.objectType == "Agent") {
+      return {
+        status: false,
+        message: "Team in context must be a group",
+      };
+    }
+  }
+  const objectType = stmt_object.objectType;
+  if (context.revision) {
+    if (!_.isString(context.revision)) {
+      return {
+        status: false,
+        message: "Context revision must be a string",
+      };
+    }
+    if (objectType !== "Activity") {
+      return {
+        status: false,
+        message:
+          "Revision is not allowed in context if statement object is not an Activity",
+      };
+    }
+  }
+  if (context.platform) {
+    if (!_.isString(context.platform)) {
+      return {
+        status: false,
+        message: "Context platform must be a string",
+      };
+    }
+    if (objectType !== "Activity") {
+      return {
+        status: false,
+        message:
+          "Platform is not allowed in context if statement object is not an Activity",
+      };
+    }
+  }
+  if (context.language) {
+    if (!_.isString(context.language)) {
+      return {
+        status: false,
+        message: "Context language must be a string",
+      };
+    }
+  }
+  if (context.statement) {
+    const isValidateStatement = validateStatementRef(context.statement);
+    if (isValidateStatement.status === false) {
+      return isValidateStatement;
+    }
+  }
+};
+
+const validateStatementRef = (ref) => {
+  if (!_.isObject(ref)) {
+    return {
+      status: false,
+      message: "StatementRef is not a properly formatted dictionary",
+    };
+  }
+  if (ref.objectType !== "StatementRef") {
+    return {
+      status: false,
+      message: "StatementRef objectType must be set to 'StatementRef'",
+    };
+  }
+  if (!validateAllowedFields(refFields, ref)) {
+    return {
+      status: false,
+      message: "StatementRef | Some field is incorrect. ",
+    };
+  }
+  if (!validateRequiredFields(refFields, ref)) {
+    return {
+      status: false,
+      message: "StatementRef | Some field is incorrect. ",
+    };
+  }
+  if (!uuid.validate(ref.id)) {
+    return {
+      status: false,
+      message: ref.id + " is not a valid UUID",
+    };
+  }
+};
+
+const refFields = ["id", "objectType"];
+
+const contextAllowedFields = [
+  "registration",
+  "instructor",
+  "team",
+  "contextActivities",
+  "revision",
+  "platform",
+  "language",
+  "statement",
+  "extensions",
+];
+
 const validateResult = (result) => {
   if (!_.isObject(result)) {
     return {
@@ -293,13 +436,13 @@ const validateResult = (result) => {
       message: "Result success must be a boolean value",
     };
   }
-  if (result.completion && !_.isBoolean(result.completion)) {
+  if (!_.isBoolean(result.completion)) {
     return {
       status: false,
       message: "Result completion must be a boolean value",
     };
   }
-  if (result.response && !_.isString(result.response)) {
+  if (!_.isString(result.response)) {
     return {
       status: false,
       message: "Result response must be a string",
@@ -385,16 +528,174 @@ const validateObject = (stmt_object) => {
       message: "Object is not a properly formatted dictionary",
     };
   }
-  // if(!stmt_object.objectType || stmt_object.objectType ==="Activity")
-  // {
-  //   validateAc
-  // }\
+  if (!stmt_object.objectType || stmt_object.objectType === "Activity") {
+    let isValidateActivity = validateActivity(stmt_object);
+    if (isValidateActivity.status === false) {
+      return isValidateActivity;
+    }
+  } else if (
+    stmt_object.objectType === "Agent" ||
+    stmt_object.objectType === "Group"
+  ) {
+    let isValidateAgent = validateAgent(stmt_object, "object");
+    if (isValidateAgent.status === false) {
+      return isValidateActivity;
+    }
+  }
   return {
     status: true,
   };
 };
 
-const validateActivity = (activity) => {};
+const validateActivity = (activity) => {
+  if (!_.isObject(activity)) {
+    return {
+      status: false,
+      message: "Activity is not a properly formatted dictionary",
+    };
+  }
+  if (!validateAllowedFields(activityAllowedFields, activity)) {
+    return {
+      status: false,
+      message: "Activity | Some field is incorrect. ",
+    };
+  }
+
+  if (!activity.id) {
+    return {
+      status: false,
+      message: "Id field must be present in an Activity",
+    };
+  }
+  if (activity.definition) {
+    let isValidateActivity = validateActivityDefinition(activity.definition);
+    if (isValidateActivity.status === false) {
+      return isValidateActivity;
+    }
+  }
+  return {
+    status: true,
+  };
+};
+
+const validateActivityDefinition = (definition) => {
+  if (!_.isObject(definition)) {
+    return {
+      status: false,
+      message: "Activity definition is not a properly formatted dictionary",
+    };
+  }
+  if (!validateAllowedFields(actDefAllowedFields, definition)) {
+    return {
+      status: false,
+      message: "Activity definition | Some field is incorrect. ",
+    };
+  }
+  if (definition.name) {
+    if (!_.isObject(definition.name)) {
+      return {
+        status: false,
+        message:
+          "Activity definition name is not a properly formatted dictionary",
+      };
+    }
+  }
+  if (definition.description) {
+    if (!_.isObject(definition.description)) {
+      return {
+        status: false,
+        message:
+          "Activity definition description is not a properly formatted dictionary",
+      };
+    }
+  }
+  let interactionType;
+  if (definition.interactionType) {
+    if (!_.isString(definition.interactionType)) {
+      return {
+        status: false,
+        message: "Activity definition interactionType must be a string",
+      };
+    }
+    const scorm_interaction_types = [
+      "true-false",
+      "choice",
+      "fill-in",
+      "long-fill-in",
+      "matching",
+      "performance",
+      "sequencing",
+      "likert",
+      "numeric",
+      "other",
+    ];
+    if (!(definition.interactionType in scorm_interaction_types)) {
+      return {
+        status: false,
+        message: "Activity definition interactionType is not valid",
+      };
+    }
+  }
+  interactionType = description.interactionType;
+
+  if (definition.correctResponsesPattern) {
+    if (_.isEmpty(interactionType)) {
+      return {
+        status: false,
+        message: "Activity definition interactionType is not valid",
+      };
+    }
+    if (!_.isArray(definition.correctResponsesPattern)) {
+      return {
+        status: false,
+        message: "Activity definition correctResponsesPattern is not valid",
+      };
+    }
+    for (let answer of definition.correctResponsesPattern) {
+      if (!_.isString(answer)) {
+        return {
+          status: false,
+          message:
+            "Activity definition correctResponsesPattern answers must all be strings",
+        };
+      }
+    }
+    if (
+      (definition.choicses ||
+        definition.scale ||
+        definition.source ||
+        definition.target ||
+        definition.steps) &&
+      _.isEmpty(interactionType)
+    ) {
+      return {
+        status: false,
+        message:
+          "interactionType must be given when using interaction components",
+      };
+    }
+  }
+  return {
+    status: true,
+  };
+};
+
+const actDefAllowedFields = [
+  "name",
+  "description",
+  "type",
+  "moreInfo",
+  "extensions",
+  "interactionType",
+  "correctResponsesPattern",
+  "choices",
+  "scale",
+  "source",
+  "target",
+  "steps",
+];
+
+const activityAllowedFields = ["objectType", "id", "definition"];
 
 const validateVerb = (verb, stmt_object = null) => {
   if (!_.isObject(verb)) {
@@ -439,6 +740,12 @@ const validateVerb = (verb, stmt_object = null) => {
         message: "Verb display is not a properly formatted dictionary",
       };
     }
+    if (!validateDictValues(verb.display)) {
+      return {
+        status: false,
+        message: "Verb display contains a null value",
+      };
+    }
     // Need impro validate languague
   }
   return {
@@ -446,6 +753,15 @@ const validateVerb = (verb, stmt_object = null) => {
   };
 };
 
+const validateDictValues = (object) => {
+  for (let key in object) {
+    if (!object.hasOwnProperty(key)) continue;
+    if (_.isEmpty(object[key])) {
+      return false;
+    }
+  }
+  return true;
+};
 const validateAgent = (agent, placement) => {
   if (!_.isObject(agent)) {
     return {
@@ -474,58 +790,66 @@ const validateAgent = (agent, placement) => {
     }
   } else if (placement !== "object" && !agent.objectType) {
     agent.objectType = "Agent";
-    let ifis = 0;
-    for (let ifis of agent_ifis_can_only_be_one) {
-      if (agent[ifis]) {
-        ifis++;
-      }
+  }
+  let ifis = [];
+
+  for (let item of agent_ifis_can_only_be_one) {
+    if (agent[item]) {
+      ifis.push(item);
     }
-    if (agent.objectType === "Agent" && ifis !== 1) {
+  }
+  if (agent.objectType === "Agent" && ifis.length !== 1) {
+    return {
+      status: false,
+      message: "One and only one of agent lists may be supplied with an Agent",
+    };
+  }
+  if (agent.objectType === "Group" && ifis.length > 1) {
+    return {
+      status: false,
+      message:
+        "None or one and only one of agent lists may be supplied with a Group",
+    };
+  }
+
+  if (agent.objectType == "Agent") {
+    if (!_.isString(agent.name)) {
       return {
         status: false,
-        message:
-          "One and only one of agent lists may be supplied with an Agent",
+        message: "If name is given in Agent, it must be a string",
       };
     }
-    if (agent.objectType === "Group" && ifis > 1) {
+    const isValidateIfi = validate_ifi(ifis[0], agent[ifis[0]]);
+    if (isValidateIfi.status === false) {
+      return isValidateIfi;
+    }
+  } else {
+    if (!_.isString(agent.name)) {
       return {
         status: false,
-        message:
-          "None or one and only one of agent lists may be supplied with a Group",
+        message: "If name is given in Group, it must be a string",
       };
     }
-    if (agent.objectType == "Agent") {
-      if (agent.name && !_.isString(agent.name)) {
-        return {
-          status: false,
-          message: "If name is given in Agent, it must be a string",
-        };
-      }
-      validate_ifi(ifis[0], agent[ifis[0]]);
-    } else {
-      if (agent.name && !_.isString(agent.name)) {
-        return {
-          status: false,
-          message: "If name is given in Group, it must be a string",
-        };
-      }
-      if (!_.isEmpty(ifis)) {
-        if (agent.member) {
-          return validate_members(agent);
-        } else {
-          return {
-            status: false,
-            message: "Anonymous groups must contain member",
-          };
-        }
+    if (_.isEmpty(ifis)) {
+      if (agent.member) {
+        return validate_members(agent);
       } else {
-        validate_ifi(ifis[0], agent[ifis[0]]);
-        if (agent.member) {
-          return validate_members(agent);
-        }
+        return {
+          status: false,
+          message: "Anonymous groups must contain member",
+        };
+      }
+    } else {
+      const isValidateIfi = validate_ifi(ifis[0], agent[ifis[0]]);
+      if (isValidateIfi.status === false) {
+        return isValidateIfi;
+      }
+      if (agent.member) {
+        return validate_members(agent);
       }
     }
   }
+
   return {
     status: true,
   };
@@ -551,22 +875,47 @@ const validate_members = (agent) => {
 const validate_ifi = (ifis, ifisValue) => {
   let validated = { status: true };
   if (ifis === "mbox") {
-    validated = validateEmail(ifisValue);
+    validated = { ...validateEmail(ifisValue) };
   } else if (ifis === "mbox_sha1sum") {
-    validated = validateEmailSha1sum(ifisValue);
+    validated = { ...validateEmailSha1sum(ifisValue) };
   } else if (ifis === "openid") {
     // Need to improve
     validated = {
       status: true,
     };
   } else if (ifis === "account") {
-    // Need to improve validate account
-    validated = {
-      status: true,
-    };
+    validated = { ...validateAccount(ifisValue) };
   }
   return validated;
 };
+const validateAccount = (account) => {
+  if (!_.isObject(account)) {
+    return {
+      status: false,
+      message: "Account is not a properly formatted dictionary",
+    };
+  }
+  if (!validateAllowedFields(accountFields, account)) {
+    return {
+      status: false,
+      message: "Account | Some field is incorrect. ",
+    };
+  }
+  if (!validateRequiredFields(accountFields, account)) {
+    return {
+      status: false,
+      message: "Account | Some field is incorrect. ",
+    };
+  }
+  if (!_.isString(account.name)) {
+    return {
+      status: false,
+      message: "account name must be a string ",
+    };
+  }
+  return { status: true };
+};
+const accountFields = ["homePage", "name"];
 const validateEmail = (email) => {
   if (_.isString(email)) {
     if (email.startsWith("mailto:")) {
@@ -676,7 +1025,7 @@ const validateRequiredFields = (required, object) => {
 module.exports = {
   async create(ctx) {
     const request = parseRequest(ctx.request);
-    console.log("request ==>", request);
+    // console.log("request ==>", request);
     const statements = { ...request.body };
     const validate = validateStatements(statements);
     if (validate.status !== true) {
