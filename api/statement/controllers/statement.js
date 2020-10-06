@@ -13,6 +13,8 @@ const moment = require("moment"); // require
 const IF_MATCH = "http_if_match";
 const IF_NONE_MATCH = "http_if_none_match";
 
+const URI = require("uri-js");
+
 const formatError = (error) => [
   { messages: [{ id: error.id, message: error.message, field: error.field }] },
 ];
@@ -171,6 +173,109 @@ const validateStatements = (statements) => {
   }
 };
 
+const validateAuthorityGroup = (authority) => {
+  if (authority.member.length !== 2) {
+    return {
+      status: false,
+      message: "Groups representing authorities must only contain 2 members",
+    };
+  }
+  let check = false;
+  for (let key in authority) {
+    if (key in agent_ifis_can_only_be_one) {
+      check = true;
+    }
+  }
+  if (check === false) {
+    return {
+      status: false,
+      message:
+        "Groups representing authorities must not contain an inverse functional identifier",
+    };
+  }
+  return {
+    status: true,
+  };
+};
+const validateSubstatement = (subStatement) => {
+  if (!_.isObject(subStatement)) {
+    return {
+      status: false,
+      message,
+    };
+  }
+  if (!validateAllowedFields(subAllowedFields, subStatement)) {
+    return {
+      status: false,
+      message: "Substatement | Some field is incorrect. ",
+    };
+  }
+  if (!validateRequiredFields(subRequiredFields, subStatement)) {
+    return {
+      status: false,
+      message: "Substatement | Some field is incorrect. ",
+    };
+  }
+  if ("timestamp" in subStatement) {
+    const parse = Date.parse(subStatement.timestamp);
+    if (isNaN(parse)) {
+      return {
+        status: false,
+        message: "Timestamp error - There was an error while parsing the date",
+      };
+    }
+  }
+  if ("stored" in subStatement) {
+    const parse = Date.parse(subStatement.stored);
+    if (isNaN(parse)) {
+      return {
+        status: false,
+        message: "Stored error - There was an error while parsing the date",
+      };
+    }
+  }
+  if (
+    subStatement.object.objectType &&
+    subStatement.object.objectType === "SubStatement"
+  ) {
+    return {
+      status: false,
+      message: "Cannot nest a SubStatement inside of another SubStatement",
+    };
+  } else {
+    subStatement.objectType = "Activity";
+  }
+  let isValidateAgent = validateAgent(subStatement.actor, "actor");
+  if (isValidateAgent.status === false) {
+    return isValidateAgent;
+  }
+  let isValidateVerb = validateVerb(subStatement.verb, subStatement.object);
+  if (isValidateVerb.status === false) {
+    return isValidateVerb;
+  }
+
+  const stmt_object = subStatement.object;
+  let isValidateObject = validateObject(stmt_object);
+  if (isValidateObject.status === false) {
+    return isValidateObject;
+  }
+  if ("result" in subStatement) {
+    let isValidateResult = validateResult(subStatement.result);
+    if (isValidateResult.status === false) {
+      return isValidateResult;
+    }
+  }
+  if ("context" in subStatement) {
+    let isValidateContext = validateContext(
+      subStatement.context,
+      subStatement.object
+    );
+    if (isValidateContext.status === false) {
+      return isValidateContext;
+    }
+  }
+  return { status: true };
+};
 const validateStatement = (statement) => {
   let result = {
     status: true,
@@ -194,7 +299,7 @@ const validateStatement = (statement) => {
       message: "Statement missing field. Required: object, verb, actor ",
     };
   }
-  if (statement.version) {
+  if ("version" in statement) {
     if (_.isString(statement.version)) {
       const re = /^1\.0(\.\d+)?$/;
       if (!re.test(statement.version)) {
@@ -210,7 +315,7 @@ const validateStatement = (statement) => {
       };
     }
   }
-  if (statement.id) {
+  if ("id" in statement) {
     if (_.isString(statement.id)) {
       if (!uuid.validate(statement.id)) {
         return {
@@ -225,7 +330,7 @@ const validateStatement = (statement) => {
       };
     }
   }
-  if (statement.timestamp) {
+  if ("timestamp" in statement) {
     const parse = Date.parse(statement.timestamp);
     if (isNaN(parse)) {
       return {
@@ -234,7 +339,7 @@ const validateStatement = (statement) => {
       };
     }
   }
-  if (statement.stored) {
+  if ("stored" in statement) {
     const parse = Date.parse(statement.stored);
     if (isNaN(parse)) {
       return {
@@ -243,6 +348,23 @@ const validateStatement = (statement) => {
       };
     }
   }
+
+  if ("authority" in statement) {
+    let isValidateAuthority = validateAgent(statement.authority, "authority");
+    if (isValidateAuthority.status === false) {
+      return isValidateAuthority;
+    }
+    if (
+      statement.authority.objectType &&
+      statement.authority.objectType === "Group"
+    ) {
+      const isValidate = validateAuthorityGroup(statement.authority);
+      if (isValidate.status === false) {
+        return isValidate;
+      }
+    }
+  }
+
   let isValidateAgent = validateAgent(statement.actor, "actor");
   if (isValidateAgent.status === false) {
     return isValidateAgent;
@@ -257,14 +379,17 @@ const validateStatement = (statement) => {
   if (isValidateObject.status === false) {
     return isValidateObject;
   }
-  if (statement.result) {
+  if ("result" in statement) {
     let isValidateResult = validateResult(statement.result);
     if (isValidateResult.status === false) {
       return isValidateResult;
     }
   }
-  if (statement.context) {
-    let isValidateContext = validateContext(statement.result);
+  if ("context" in statement) {
+    let isValidateContext = validateContext(
+      statement.context,
+      statement.object
+    );
     if (isValidateContext.status === false) {
       return isValidateContext;
     }
@@ -285,7 +410,7 @@ const validateContext = (context, stmt_object) => {
       message: "Context | Some field is incorrect. ",
     };
   }
-  if (context.registration) {
+  if ("registration" in context) {
     if (!uuid.validate(context.registration)) {
       return {
         status: false,
@@ -293,7 +418,7 @@ const validateContext = (context, stmt_object) => {
       };
     }
   }
-  if (context.instructor) {
+  if ("instructor" in context) {
     const isValidateAgent = validateAgent(
       context.instructor,
       "Context instructor"
@@ -302,7 +427,7 @@ const validateContext = (context, stmt_object) => {
       return isValidateAgent;
     }
   }
-  if (context.team) {
+  if ("team" in context) {
     const isValidateAgent = validateAgent(context.instructor, "Context Team");
     if (isValidateAgent.status === false) {
       return isValidateAgent;
@@ -315,7 +440,7 @@ const validateContext = (context, stmt_object) => {
     }
   }
   const objectType = stmt_object.objectType;
-  if (context.revision) {
+  if ("revision" in context) {
     if (!_.isString(context.revision)) {
       return {
         status: false,
@@ -330,7 +455,7 @@ const validateContext = (context, stmt_object) => {
       };
     }
   }
-  if (context.platform) {
+  if ("platform" in context) {
     if (!_.isString(context.platform)) {
       return {
         status: false,
@@ -345,7 +470,7 @@ const validateContext = (context, stmt_object) => {
       };
     }
   }
-  if (context.language) {
+  if ("language" in context) {
     if (!_.isString(context.language)) {
       return {
         status: false,
@@ -353,12 +478,28 @@ const validateContext = (context, stmt_object) => {
       };
     }
   }
-  if (context.statement) {
+  if ("statement" in context) {
     const isValidateStatement = validateStatementRef(context.statement);
+
     if (isValidateStatement.status === false) {
       return isValidateStatement;
     }
   }
+  if ("extensions" in context) {
+    if (!_.isObject(context.extensions)) {
+      return {
+        status: false,
+        message: "Context extensions must be a dictionary",
+      };
+    }
+    for (let key in context.extensions) {
+      const isValidate = validateIRI(key);
+      if (isValidate.status === false) {
+        return isValidate;
+      }
+    }
+  }
+  return { status: true };
 };
 
 const validateStatementRef = (ref) => {
@@ -392,6 +533,9 @@ const validateStatementRef = (ref) => {
       message: ref.id + " is not a valid UUID",
     };
   }
+  return {
+    status: true,
+  };
 };
 
 const refFields = ["id", "objectType"];
@@ -539,9 +683,21 @@ const validateObject = (stmt_object) => {
   ) {
     let isValidateAgent = validateAgent(stmt_object, "object");
     if (isValidateAgent.status === false) {
-      return isValidateActivity;
+      return isValidateAgent;
+    }
+  } else if (stmt_object.objectType === "SubStatement") {
+    const isValidate = validateSubstatement(stmt_object);
+    if (isValidate.status === false) {
+      return isValidate;
+    }
+  } else if (stmt_object.objectType === "StatementRef") {
+    const isValidateStatement = validateStatementRef(stmt_object);
+
+    if (isValidateStatement.status === false) {
+      return isValidateStatement;
     }
   }
+
   return {
     status: true,
   };
@@ -567,7 +723,7 @@ const validateActivity = (activity) => {
       message: "Id field must be present in an Activity",
     };
   }
-  if (activity.definition) {
+  if ("definition" in activity) {
     let isValidateActivity = validateActivityDefinition(activity.definition);
     if (isValidateActivity.status === false) {
       return isValidateActivity;
@@ -591,7 +747,7 @@ const validateActivityDefinition = (definition) => {
       message: "Activity definition | Some field is incorrect. ",
     };
   }
-  if (definition.name) {
+  if ("name" in definition) {
     if (!_.isObject(definition.name)) {
       return {
         status: false,
@@ -600,7 +756,7 @@ const validateActivityDefinition = (definition) => {
       };
     }
   }
-  if (definition.description) {
+  if ("description" in definition) {
     if (!_.isObject(definition.description)) {
       return {
         status: false,
@@ -609,6 +765,21 @@ const validateActivityDefinition = (definition) => {
       };
     }
   }
+
+  if ("type" in definition) {
+    const isValidate = validateIRI(definition.type);
+    if (isValidate.status === false) {
+      return isValidate;
+    }
+  }
+
+  if ("moreInfo" in definition) {
+    const isValidate = validateIRI(definition.moreInfo);
+    if (isValidate.status === false) {
+      return isValidate;
+    }
+  }
+
   let interactionType;
   if (definition.interactionType) {
     if (!_.isString(definition.interactionType)) {
@@ -636,7 +807,7 @@ const validateActivityDefinition = (definition) => {
       };
     }
   }
-  interactionType = description.interactionType;
+  interactionType = definition.interactionType;
 
   if (definition.correctResponsesPattern) {
     if (_.isEmpty(interactionType)) {
@@ -696,7 +867,16 @@ const actDefAllowedFields = [
 ];
 
 const activityAllowedFields = ["objectType", "id", "definition"];
-
+const subAllowedFields = [
+  "actor",
+  "verb",
+  "object",
+  "result",
+  "context",
+  "timestamp",
+  "objectType",
+];
+const subRequiredFields = ["actor", "verb", "object"];
 const validateVerb = (verb, stmt_object = null) => {
   if (!_.isObject(verb)) {
     return {
@@ -1009,6 +1189,20 @@ const validateRequiredFields = (required, object) => {
     }
   }
   return true;
+};
+
+const validateIRI = (IRI) => {
+  console.log("IRI ==>", IRI);
+  if (_.isString(IRI)) {
+    const parseUri = URI.parse(IRI);
+    console.log("uri parse ==>", parseUri);
+  } else {
+    return {
+      status: false,
+      message: "IRI must be a string type",
+    };
+  }
+  return { status: true };
 };
 
 // const validate_body = (body, auth, headers )=> {
