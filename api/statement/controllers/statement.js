@@ -8,154 +8,11 @@
 const uuid = require("uuid");
 const _ = require("lodash");
 const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
-const convertRestQueryParams = require("strapi-utils/lib/convert-rest-query-params");
-const moment = require("moment"); // require
-const IF_MATCH = "http_if_match";
-const IF_NONE_MATCH = "http_if_none_match";
-
 const URI = require("uri-js");
-
+const { parseRequest } = require("../../../utils/parseRequest");
 const formatError = (error) => [
   { messages: [{ id: error.id, message: error.message, field: error.field }] },
 ];
-
-const parseRequest = (request, moreId = null) => {
-  const rObj = {};
-  rObj.body = { ...request.body };
-  rObj.headers = getHeaders(request.headers);
-
-  rObj.params = {};
-  if (request.method === "POST" && request.query.method) {
-    // parse CORS
-    parseCorsRequest(request, rObj);
-  } else {
-    // Parse normal
-    parseNormalRequest(request, rObj);
-  }
-  rObj.domain = request.headers.host;
-  rObj.scheme = request.secure ? "https" : "http";
-  rObj.auth = { ...request.auth };
-
-  return rObj;
-};
-
-const parseCorsRequest = (request, rObj) => {
-  try {
-    rObj.method = request.query.method.toLowerCase();
-  } catch {
-    return "Could not find method parameter for CORS request";
-  }
-  if (Object.keys(request.query).length > 1) {
-    return "CORS must only include method in query string parameters";
-  }
-  rObj.body = request.body;
-  rObj.params = request.body;
-};
-
-const parseNormalRequest = (request, rObj) => {
-  if (request.method === "POST" || request.method === "PUT") {
-    if (rObj.headers.contentType) {
-      if (rObj.headers.contentType.includes("multipart/mixed")) {
-        // process parse attactment
-      } else {
-        rObj.rawBody = JSON.stringify(request.body);
-      }
-    }
-  } else if (request.method === "DELETE") {
-    if (request.body !== "") {
-      rObj.params = request.body;
-    }
-  }
-  rObj.params = request.query;
-  rObj.method = request.method;
-};
-
-const getHeaders = (headers) => {
-  let headerObj = {};
-  if (headers.http_updated) {
-    try {
-      headerObj.updated = moment(popObject(headers, "http_updated")).format(
-        "DD-MM-YYYY"
-      );
-    } catch {}
-  } else if (headers.updated) {
-    try {
-      headerObj.updated = moment(popObject(headers, "updated")).format(
-        "DD-MM-YYYY"
-      );
-    } catch {}
-  }
-  headerObj.contentType = popObject(headers, "content_type");
-  if (
-    (!headerObj.contentType || headerObj.contentType === "") &&
-    headers["content-type"]
-  ) {
-    headerObj.contentType = popObject(headers, "content-type");
-  }
-  if (headerObj.contentType && headerObj.contentType !== "") {
-    if (
-      headerObj.contentType.includes(";") &&
-      !headerObj.contentType.includes("boundary")
-    ) {
-      headerObj.contentType = headerObj.contentType.split(";")[0];
-    }
-  }
-  headerObj.etag = getEtagInfo(headers);
-
-  if ("http_authorization" in headers) {
-    headerObj.authorization = headers["http_authorization"];
-  } else if ("authorization" in headers) {
-    headerObj.authorization = headers["authorization"];
-  }
-
-  if ("accept_language" in headers) {
-    headerObj.language = popObject(headers, "accept_language");
-  } else if ("accept-language" in headers) {
-    headerObj.language = popObject(headers, "accept-language");
-  } else if ("http_accept_language" in headers) {
-    headerObj.language = popObject(headers, "http_accept_language");
-  }
-  if (headers["x-experience-api-version"]) {
-    headerObj["x-experience-api-version"] = popObject(
-      headers,
-      "x-experience-api-version"
-    );
-  }
-  return headerObj;
-};
-
-const getEtagInfo = (headers) => {
-  const etag = {};
-  etag[IF_MATCH] = headers[IF_MATCH];
-  if (_.isNull(etag[IF_MATCH])) {
-    etag[IF_MATCH] = headers["if_match"];
-  }
-  if (_.isNull(etag[IF_MATCH])) {
-    etag[IF_MATCH] = headers["if-match"];
-  }
-  etag[IF_NONE_MATCH] = headers[IF_NONE_MATCH];
-  if (_.isNull(etag[IF_NONE_MATCH])) {
-    etag[IF_NONE_MATCH] = headers["if_none_match"];
-  }
-  if (_.isNull(etag[IF_NONE_MATCH])) {
-    etag[IF_NONE_MATCH] = headers["if-none-match"];
-  }
-  etag[IF_MATCH] = etag[IF_MATCH] ? etag[IF_MATCH] : null;
-  etag[IF_NONE_MATCH] = etag[IF_NONE_MATCH] ? etag[IF_NONE_MATCH] : null;
-  return etag;
-};
-
-const popObject = (obj, attr) => {
-  if (attr in obj) {
-    const result = obj[attr];
-    if (!delete obj[result]) {
-      throw new Error();
-    }
-    return result;
-  } else {
-    return "";
-  }
-};
 
 const validateStatements = (statements) => {
   if (_.isObject(statements)) {
@@ -168,8 +25,7 @@ const validateStatements = (statements) => {
       }
     }
   } else {
-    result.status = false;
-    result.message = "There are no statements to validate";
+    return { status: false, message: "There are no statements to validate" };
   }
 };
 
@@ -180,13 +36,13 @@ const validateAuthorityGroup = (authority) => {
       message: "Groups representing authorities must only contain 2 members",
     };
   }
-  let check = false;
+  let check = 0;
   for (let key in authority) {
     if (key in agent_ifis_can_only_be_one) {
-      check = true;
+      check++;
     }
   }
-  if (check === false) {
+  if (check > 2) {
     return {
       status: false,
       message:
@@ -477,6 +333,10 @@ const validateContext = (context, stmt_object) => {
         message: "Context language must be a string",
       };
     }
+    const isValidated = validateLanguage(context.language);
+    if (isValidated.status === false) {
+      return isValidated;
+    }
   }
   if ("statement" in context) {
     const isValidateStatement = validateStatementRef(context.statement);
@@ -501,7 +361,41 @@ const validateContext = (context, stmt_object) => {
   }
   return { status: true };
 };
-
+const validateLanguage = (lang) => {
+  if (!_.isString(lang)) {
+    return {
+      status: false,
+      message: "Context language must be a string",
+    };
+  }
+  const langPart = lang.split("-");
+  const re = /^[A-Za-z0-9]*$/;
+  for (let iLang of langPart) {
+    if (re.test(iLang)) {
+      if (iLang.length > 8) {
+        return {
+          status: false,
+          message: "Language isn't valid. ",
+        };
+      }
+    } else {
+      return {
+        status: false,
+        message: "Language isn't valid. ",
+      };
+    }
+  }
+  return { status: true };
+};
+const validateLanguageMap = (langMap) => {
+  for (let lang of langMap) {
+    const isValidate = validateLanguage(lang);
+    if (isValidate.status === false) {
+      return isValidate;
+    }
+  }
+  return { status: true };
+};
 const validateStatementRef = (ref) => {
   if (!_.isObject(ref)) {
     return {
@@ -755,6 +649,11 @@ const validateActivityDefinition = (definition) => {
           "Activity definition name is not a properly formatted dictionary",
       };
     }
+    const langMap = Object.keys(definition.name);
+    const isValidate = validateLanguageMap(langMap);
+    if (isValidate.status === false) {
+      return isValidate;
+    }
   }
   if ("description" in definition) {
     if (!_.isObject(definition.description)) {
@@ -763,6 +662,11 @@ const validateActivityDefinition = (definition) => {
         message:
           "Activity definition description is not a properly formatted dictionary",
       };
+    }
+    const langMap = Object.keys(definition.description);
+    const isValidate = validateLanguageMap(langMap);
+    if (isValidate.status === false) {
+      return isValidate;
     }
   }
 
@@ -926,7 +830,12 @@ const validateVerb = (verb, stmt_object = null) => {
         message: "Verb display contains a null value",
       };
     }
-    // Need impro validate languague
+
+    const langMap = Object.keys(verb.display);
+    const isValidate = validateLanguageMap(langMap);
+    if (isValidate.status === false) {
+      return isValidate;
+    }
   }
   return {
     status: true,
@@ -993,7 +902,7 @@ const validateAgent = (agent, placement) => {
   }
 
   if (agent.objectType == "Agent") {
-    if (!_.isString(agent.name)) {
+    if ("name" in agent && !_.isString(agent.name)) {
       return {
         status: false,
         message: "If name is given in Agent, it must be a string",
@@ -1004,7 +913,7 @@ const validateAgent = (agent, placement) => {
       return isValidateIfi;
     }
   } else {
-    if (!_.isString(agent.name)) {
+    if ("name" in agent && !_.isString(agent.name)) {
       return {
         status: false,
         message: "If name is given in Group, it must be a string",
