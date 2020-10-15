@@ -11,7 +11,7 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "deepdash": "^5.3.0",
+    "deepdash": "5.3.0",
     "strapi": "3.1.4",
     "strapi-admin": "3.1.4",
     "strapi-connector-mongoose": "3.1.4",
@@ -21,9 +21,9 @@
     "strapi-plugin-graphql": "3.1.4",
     "strapi-plugin-upload": "3.1.4",
     "strapi-plugin-users-permissions": "3.1.4",
-    "strapi-utils": "^3.1.4",
-    "uri-js": "^4.4.0",
-    "uuid": "^8.3.0"
+    "strapi-utils": "3.1.4",
+    "uri-js": "4.4.0",
+    "uuid": "8.3.0"
   },
   "author": {
     "name": "A Strapi developer"
