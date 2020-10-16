@@ -92,7 +92,7 @@ module.exports = {
       if (queryVerb) {
         data.verb._id = queryVerb.id;
       } else {
-        verb = { verb_id: verb.cid, caninical_data: { ...verb } };
+        verb = { verb_id: verb.cid, canonical_data: { ...verb } };
         const entryVerb = await strapi.query("verb").create(verb);
         data.verb._id = entryVerb.id;
       }
@@ -160,7 +160,18 @@ module.exports = {
         data.authority._id = entryAuthor.id;
       }
     }
+    // if(data.context_contextActivities)
+    // {
+    //   for(let key in data.context_contextActivities){
+    //     const con_act_group = data.context_contextActivities[key];
+    //     if(_.isArray(con_act_group)){
 
+    //     }
+    //     else{
+
+    //     }
+    //   }
+    // }
     const entry = await strapi.query("statement").create(data);
 
     if (files) {

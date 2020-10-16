@@ -98,10 +98,11 @@ module.exports = async (ctx, next) => {
       request.auth.user = user;
       request.auth.agent = user.user_agent ? user.user_agent : user;
       request.auth.define = true;
-      // request.body.authority = user.user_agent ? user.user_agent : user;
-      // request.body.full_statement = {
-      //   authority: user,
-      // };
+      request.body.authority = {
+        objectType: "Agent",
+        name: user.user_agent ? user.user_agent.name : user.username,
+        mbox: `mailto:${user.email}`,
+      };
 
       return next();
     }
