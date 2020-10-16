@@ -474,13 +474,13 @@ const validateResult = (result) => {
       message: "Result success must be a boolean value",
     };
   }
-  if (!_.isBoolean(result.completion)) {
+  if ("completion" in result && !_.isBoolean(result.completion)) {
     return {
       status: false,
       message: "Result completion must be a boolean value",
     };
   }
-  if (!_.isString(result.response)) {
+  if ("response" in result && !_.isString(result.response)) {
     return {
       status: false,
       message: "Result response must be a string",
@@ -1101,10 +1101,10 @@ const validateRequiredFields = (required, object) => {
 };
 
 const validateIRI = (IRI) => {
-  console.log("IRI ==>", IRI);
+  // console.log("IRI ==>", IRI);
   if (_.isString(IRI)) {
     const parseUri = URI.parse(IRI);
-    console.log("uri parse ==>", parseUri);
+    // console.log("uri parse ==>", parseUri);
   } else {
     return {
       status: false,
