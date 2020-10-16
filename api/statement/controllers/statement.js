@@ -284,7 +284,7 @@ const validateContext = (context, stmt_object) => {
     }
   }
   if ("team" in context) {
-    const isValidateAgent = validateAgent(context.instructor, "Context Team");
+    const isValidateAgent = validateAgent(context.team, "Context Team");
     if (isValidateAgent.status === false) {
       return isValidateAgent;
     }
@@ -590,6 +590,8 @@ const validateObject = (stmt_object) => {
     if (isValidateStatement.status === false) {
       return isValidateStatement;
     }
+  } else {
+    return { status: false, message: "Object | Object Type is invalid!" };
   }
 
   return {
@@ -704,7 +706,7 @@ const validateActivityDefinition = (definition) => {
       "numeric",
       "other",
     ];
-    if (!(definition.interactionType in scorm_interaction_types)) {
+    if (!scorm_interaction_types.includes(definition.interactionType)) {
       return {
         status: false,
         message: "Activity definition interactionType is not valid",
@@ -715,6 +717,7 @@ const validateActivityDefinition = (definition) => {
 
   if (definition.correctResponsesPattern) {
     if (_.isEmpty(interactionType)) {
+      // console.log("22222222", interactionType);
       return {
         status: false,
         message: "Activity definition interactionType is not valid",
@@ -852,6 +855,8 @@ const validateDictValues = (object) => {
   return true;
 };
 const validateAgent = (agent, placement) => {
+  // console.log("gaet ==>", agent);
+  // console.log("placement ==>", placement);
   if (!_.isObject(agent)) {
     return {
       status: false,
