@@ -172,6 +172,9 @@ module.exports = {
     //     }
     //   }
     // }
+    if (_.isEmpty(data.stored)) {
+      data.stored = Date.now();
+    }
     const entry = await strapi.query("statement").create(data);
 
     if (files) {
@@ -190,6 +193,58 @@ module.exports = {
       params.cid = params.statementId;
       delete params.statementId;
     }
+    if (params.verb) {
+      params["verb.verb_id"] = params.verb;
+      delete params.verb;
+    }
+    if (params.voidedStatementId) {
+      params.cid = params.voidedStatementId;
+      delete params.voidedStatementId;
+    }
+    if (params.agent) {
+      const objAgent = JSON.parse(params.agent);
+      params["actor.name"] = objAgent.name;
+      params["actor.mbox"] = objAgent.mbox;
+      delete params.agent;
+      if (params.related_agents) {
+        delete params.related_agents;
+      }
+    }
+    if (params.activity) {
+      params["object_activity.activity_id"] = params.activity;
+      delete params.activity;
+      if (params.related_activities) {
+        // params["context_ca_other.activity_id"] = params.activity
+        delete params.related_activities;
+      }
+    }
+    if (params.registration) {
+      params["context_registration"] = params.registration;
+      delete params.registration;
+    }
+    if (params.since) {
+      params["stored_lt"] = params.since;
+      delete params.since;
+    }
+    if (params.until) {
+      params["stored_gt"] = params.until;
+      delete params.until;
+    }
+    if (params.limit) {
+      params["_limit"] = params.limit;
+      delete params.limit;
+    }
+    if (params.ascending) {
+      params["_sort"] = "stored:asc";
+      delete params.ascending;
+    }
+    if (params.format) {
+      delete params.format;
+    }
+    if (params.attachments) {
+      delete params.attachments;
+    }
+
     return strapi.query("statement").find(params, populate);
   },
 };

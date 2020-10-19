@@ -10,6 +10,89 @@ const _ = require("lodash");
 const { parseMultipartData, sanitizeEntity } = require("strapi-utils");
 const URI = require("uri-js");
 const { parseRequest } = require("../../../utils/parseRequest");
+
+const refFields = ["id", "objectType"];
+
+const contextAllowedFields = [
+  "registration",
+  "instructor",
+  "team",
+  "contextActivities",
+  "revision",
+  "platform",
+  "language",
+  "statement",
+  "extensions",
+];
+
+const scoreAllowedFields = ["scaled", "raw", "min", "max"];
+const resultAllowedFields = [
+  "score",
+  "success",
+  "completion",
+  "response",
+  "duration",
+  "extensions",
+];
+
+const actDefAllowedFields = [
+  "name",
+  "description",
+  "type",
+  "moreInfo",
+  "extensions",
+  "interactionType",
+  "correctResponsesPattern",
+  "choices",
+  "scale",
+  "source",
+  "target",
+  "steps",
+];
+
+const activityAllowedFields = ["objectType", "id", "definition"];
+const subAllowedFields = [
+  "actor",
+  "verb",
+  "object",
+  "result",
+  "context",
+  "timestamp",
+  "objectType",
+];
+const subRequiredFields = ["actor", "verb", "object"];
+const accountFields = ["homePage", "name"];
+const agent_ifis_can_only_be_one = [
+  "mbox",
+  "mbox_sha1sum",
+  "openid",
+  "account",
+];
+const agentAllowedFields = [
+  "objectType",
+  "name",
+  "member",
+  "mbox",
+  "mbox_sha1sum",
+  "openid",
+  "account",
+];
+const statementAllowedFields = [
+  "id",
+  "actor",
+  "verb",
+  "object",
+  "result",
+  "stored",
+  "context",
+  "timestamp",
+  "authority",
+  "version",
+  "attachments",
+];
+const verbAllowedFields = ["id", "display"];
+const statementRequiredFields = ["actor", "verb", "object"];
+
 const formatError = (error) => [
   { messages: [{ id: error.id, message: error.message, field: error.field }] },
 ];
@@ -53,6 +136,7 @@ const validateAuthorityGroup = (authority) => {
     status: true,
   };
 };
+
 const validateSubstatement = (subStatement) => {
   if (!_.isObject(subStatement)) {
     return {
@@ -132,6 +216,7 @@ const validateSubstatement = (subStatement) => {
   }
   return { status: true };
 };
+
 const validateStatement = (statement) => {
   let result = {
     status: true,
@@ -361,6 +446,7 @@ const validateContext = (context, stmt_object) => {
   }
   return { status: true };
 };
+
 const validateLanguage = (lang) => {
   if (!_.isString(lang)) {
     return {
@@ -387,6 +473,7 @@ const validateLanguage = (lang) => {
   }
   return { status: true };
 };
+
 const validateLanguageMap = (langMap) => {
   for (let lang of langMap) {
     const isValidate = validateLanguage(lang);
@@ -396,6 +483,7 @@ const validateLanguageMap = (langMap) => {
   }
   return { status: true };
 };
+
 const validateStatementRef = (ref) => {
   if (!_.isObject(ref)) {
     return {
@@ -431,20 +519,6 @@ const validateStatementRef = (ref) => {
     status: true,
   };
 };
-
-const refFields = ["id", "objectType"];
-
-const contextAllowedFields = [
-  "registration",
-  "instructor",
-  "team",
-  "contextActivities",
-  "revision",
-  "platform",
-  "language",
-  "statement",
-  "extensions",
-];
 
 const validateResult = (result) => {
   if (!_.isObject(result)) {
@@ -550,15 +624,7 @@ const validateResult = (result) => {
     status: true,
   };
 };
-const scoreAllowedFields = ["scaled", "raw", "min", "max"];
-const resultAllowedFields = [
-  "score",
-  "success",
-  "completion",
-  "response",
-  "duration",
-  "extensions",
-];
+
 const validateObject = (stmt_object) => {
   if (!_.isObject(stmt_object)) {
     return {
@@ -758,32 +824,6 @@ const validateActivityDefinition = (definition) => {
   };
 };
 
-const actDefAllowedFields = [
-  "name",
-  "description",
-  "type",
-  "moreInfo",
-  "extensions",
-  "interactionType",
-  "correctResponsesPattern",
-  "choices",
-  "scale",
-  "source",
-  "target",
-  "steps",
-];
-
-const activityAllowedFields = ["objectType", "id", "definition"];
-const subAllowedFields = [
-  "actor",
-  "verb",
-  "object",
-  "result",
-  "context",
-  "timestamp",
-  "objectType",
-];
-const subRequiredFields = ["actor", "verb", "object"];
 const validateVerb = (verb, stmt_object = null) => {
   if (!_.isObject(verb)) {
     return {
@@ -854,6 +894,7 @@ const validateDictValues = (object) => {
   }
   return true;
 };
+
 const validateAgent = (agent, placement) => {
   // console.log("gaet ==>", agent);
   // console.log("placement ==>", placement);
@@ -913,7 +954,7 @@ const validateAgent = (agent, placement) => {
         message: "If name is given in Agent, it must be a string",
       };
     }
-    const isValidateIfi = validate_ifi(ifis[0], agent[ifis[0]]);
+    const isValidateIfi = validateIfi(ifis[0], agent[ifis[0]]);
     if (isValidateIfi.status === false) {
       return isValidateIfi;
     }
@@ -926,7 +967,7 @@ const validateAgent = (agent, placement) => {
     }
     if (_.isEmpty(ifis)) {
       if (agent.member) {
-        return validate_members(agent);
+        return validateMembers(agent);
       } else {
         return {
           status: false,
@@ -934,12 +975,12 @@ const validateAgent = (agent, placement) => {
         };
       }
     } else {
-      const isValidateIfi = validate_ifi(ifis[0], agent[ifis[0]]);
+      const isValidateIfi = validateIfi(ifis[0], agent[ifis[0]]);
       if (isValidateIfi.status === false) {
         return isValidateIfi;
       }
       if (agent.member) {
-        return validate_members(agent);
+        return validateMembers(agent);
       }
     }
   }
@@ -948,7 +989,8 @@ const validateAgent = (agent, placement) => {
     status: true,
   };
 };
-const validate_members = (agent) => {
+
+const validateMembers = (agent) => {
   const member = agent.member;
   if (!_.isArray(member)) {
     return {
@@ -966,7 +1008,8 @@ const validate_members = (agent) => {
     return validateAgent(agent, "member");
   }
 };
-const validate_ifi = (ifis, ifisValue) => {
+
+const validateIfi = (ifis, ifisValue) => {
   let validated = { status: true };
   if (ifis === "mbox") {
     validated = { ...validateEmail(ifisValue) };
@@ -982,6 +1025,7 @@ const validate_ifi = (ifis, ifisValue) => {
   }
   return validated;
 };
+
 const validateAccount = (account) => {
   if (!_.isObject(account)) {
     return {
@@ -1009,7 +1053,7 @@ const validateAccount = (account) => {
   }
   return { status: true };
 };
-const accountFields = ["homePage", "name"];
+
 const validateEmail = (email) => {
   if (_.isString(email)) {
     if (email.startsWith("mailto:")) {
@@ -1036,6 +1080,7 @@ const validateEmail = (email) => {
     status: true,
   };
 };
+
 const validateEmailSha1sum = (sha1sum) => {
   if (_.isString(sha1sum)) {
     const re = /([a-fA-F\d]{40}$)/;
@@ -1055,36 +1100,7 @@ const validateEmailSha1sum = (sha1sum) => {
     status: true,
   };
 };
-const agent_ifis_can_only_be_one = [
-  "mbox",
-  "mbox_sha1sum",
-  "openid",
-  "account",
-];
-const agentAllowedFields = [
-  "objectType",
-  "name",
-  "member",
-  "mbox",
-  "mbox_sha1sum",
-  "openid",
-  "account",
-];
-const statementAllowedFields = [
-  "id",
-  "actor",
-  "verb",
-  "object",
-  "result",
-  "stored",
-  "context",
-  "timestamp",
-  "authority",
-  "version",
-  "attachments",
-];
-const verbAllowedFields = ["id", "display"];
-const statementRequiredFields = ["actor", "verb", "object"];
+
 const validateAllowedFields = (allowed, object) => {
   for (let key in object) {
     if (!object.hasOwnProperty(key)) continue;
@@ -1119,21 +1135,9 @@ const validateIRI = (IRI) => {
   return { status: true };
 };
 
-// const validate_body = (body, auth, headers )=> {
-//   for(let stmt of body){
-//     server_validate_statement(stmt, auth, content_type);
-
-//   }
-// }
-// const server_validate_statement = (stmt, auth, content_type) => {
-//   if (stmt.id){
-//     const statementId = stmt.id;
-//   }
-// }
 module.exports = {
   async create(ctx) {
     const request = parseRequest(ctx.request);
-    // console.log("request ==>", request);
     const statements = { ...request.body };
     const validate = validateStatements(statements);
     if (validate.status !== true) {
@@ -1145,14 +1149,6 @@ module.exports = {
         })
       );
     }
-
-    // let body = { ...request.body };
-    // if (!_.isArray(body)) {
-    //   body = [body];
-    // }
-    // ctx.status = 200;
-    // ctx.body = validate;
-    // return ctx;
     let entity;
     if (ctx.is("multipart")) {
       const { data, files } = parseMultipartData(ctx);
@@ -1160,16 +1156,20 @@ module.exports = {
     } else {
       entity = await strapi.services.statement.create(ctx.request.body);
     }
-    // console.log("emntity ==>", entity);
-    // if (entity.status === false) {
-    //   return ctx.badRequest(
-    //     null,
-    //     formatError({
-    //       id: "Statement.error",
-    //       message: entity.message,
-    //     })
-    //   );
-    // }
     return sanitizeEntity(entity, { model: strapi.models.statement });
+  },
+  async find(ctx) {
+    let entities;
+    if (ctx.query._q) {
+      entities = await strapi.services.statement.search(ctx.query);
+    } else {
+      entities = await strapi.services.statement.find(ctx.query);
+    }
+    if (_.isEmpty(entities)) {
+      ctx.status = 204;
+    }
+    return entities.map((entity) =>
+      sanitizeEntity(entity, { model: strapi.models.statement })
+    );
   },
 };
