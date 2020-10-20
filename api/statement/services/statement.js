@@ -143,10 +143,6 @@ module.exports = {
         delete data.result_core;
       }
     }
-    // if (data.id) {
-    //   data.cid = data.id;
-    //   delete data.id;
-    // }
     if (data.authority) {
       const { authority } = data;
 
@@ -160,18 +156,6 @@ module.exports = {
         data.authority._id = entryAuthor.id;
       }
     }
-    // if(data.context_contextActivities)
-    // {
-    //   for(let key in data.context_contextActivities){
-    //     const con_act_group = data.context_contextActivities[key];
-    //     if(_.isArray(con_act_group)){
-
-    //     }
-    //     else{
-
-    //     }
-    //   }
-    // }
     if (_.isEmpty(data.stored)) {
       data.stored = Date.now();
     }
@@ -246,5 +230,154 @@ module.exports = {
     }
 
     return strapi.query("statement").find(params, populate);
+  },
+  async update(params, data, { files } = {}) {
+    const validData = await strapi.entityValidator.validateEntityUpdate(
+      strapi.models.statement,
+      data
+    );
+
+    // replaceIdToCid(validData);
+    if (validData.actor) {
+      const { actor } = validData;
+      const queryActor = await strapi
+        .query("agent")
+        .findOne({ name: actor.name, mbox: actor.mbox });
+      if (queryActor && queryActor._id) {
+        validData.actor._id = queryActor.id;
+      } else {
+        const entryActor = await strapi.query("agent").create(actor);
+        validData.actor._id = entryActor.id;
+      }
+    }
+    if (validData.object) {
+      const statementObjectData = validData.object;
+      if (
+        statementObjectData.objectType === "Group" ||
+        statementObjectData.objectType === "Agent"
+      ) {
+        const agent = await strapi.query("agent").create(statementObjectData);
+        validData.object_agent = agent;
+      }
+      if (statementObjectData.objectType === "Activity") {
+        const queryActivity = await strapi
+          .query("activity")
+          .findOne({ activity_id: statementObjectData.cid });
+        if (queryActivity && queryActivity._id) {
+          validData.object_activity = queryActivity;
+        } else {
+          statementObjectData.activity_id = statementObjectData.cid;
+          statementObjectData.canonical_data = { ...statementObjectData };
+          const activity = await strapi
+            .query("activity")
+            .create(statementObjectData);
+
+          validData.object_activity = activity;
+        }
+      }
+      if (statementObjectData.objectType === "SubStatement") {
+        // Continue process with substatement
+        const subStatement = await strapi
+          .query("substatement")
+          .create(statementObjectData);
+        validData.object_substatement = subStatement;
+      }
+      if (statementObjectData.objectType === "StatementRef") {
+        validData.object_statementref = statementObjectData.cid;
+      }
+      delete validData.object;
+    }
+
+    if (validData.verb) {
+      let { verb } = validData;
+      const queryVerb = await strapi
+        .query("verb")
+        .findOne({ verb_id: verb.cid });
+      if (queryVerb) {
+        validData.verb._id = queryVerb.id;
+      } else {
+        verb = { verb_id: verb.cid, canonical_data: { ...verb } };
+        const entryVerb = await strapi.query("verb").create(verb);
+        validData.verb._id = entryVerb.id;
+      }
+    }
+    //Process case Context
+    if (validData.context) {
+      const { context } = data;
+      for (let key in context) {
+        // skip loop if the property is from prototype
+        if (!context.hasOwnProperty(key)) continue;
+
+        let obj = context[key];
+        validData["context_" + key] = obj;
+      }
+      if (validData.context_instructor) {
+        const context_instructor = await strapi
+          .query("agent")
+          .create(validData.context_instructor);
+        validData.context_instructor = context_instructor;
+      }
+      if (validData.context_team) {
+        const context_team = await strapi
+          .query("agent")
+          .create(validData.context_team);
+        validData.context_team = context_team;
+      }
+      if (validData.context_statement) {
+        validData.context_statement = validData.context_statement.cid;
+      }
+    }
+    // Case have result
+    if (validData.result) {
+      const { result } = validData;
+      for (let key in result) {
+        // skip loop if the property is from prototype
+        if (!result.hasOwnProperty(key)) continue;
+        let obj = result[key];
+        validData["result_" + key] = obj;
+      }
+      if (validData.result_score) {
+        for (let result_score in validData) {
+          // skip loop if the property is from prototype
+          if (!result.hasOwnProperty(result_score)) continue;
+          let obj = validData[result_score];
+          validData["result_score_" + result_score] = obj;
+        }
+        delete validData.result.score;
+        delete validData.result_core;
+      }
+    }
+    if (validData.authority) {
+      const { authority } = validData;
+
+      const queryAuthor = await strapi
+        .query("agent")
+        .findOne({ name: authority.name, mbox: authority.mbox });
+      if (queryAuthor && queryAuthor._id) {
+        validData.authority._id = queryAuthor.id;
+      } else {
+        const entryAuthor = await strapi.query("agent").create(authority);
+        validData.authority._id = entryAuthor.id;
+      }
+    }
+    if (_.isEmpty(validData.stored)) {
+      validData.stored = Date.now();
+    }
+    console.log("params ==?", params);
+
+    validData.object_activity = validData.object_activity._id.toString();
+    console.log("validData ==>", validData);
+    const entry = await strapi.query("statement").update(params, validData);
+    console.log("entry ==>", entry);
+    if (files) {
+      // automatically uploads the files based on the entry and the model
+      await strapi.entityService.uploadFiles(entry, files, {
+        model: "statement",
+        // if you are using a plugin's model you will have to add the `source` key (source: 'users-permissions')
+      });
+      return this.findOne({ id: entry.id });
+    }
+
+    return entry;
   },
 };

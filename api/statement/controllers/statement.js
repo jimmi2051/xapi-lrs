@@ -1172,4 +1172,39 @@ module.exports = {
       sanitizeEntity(entity, { model: strapi.models.statement })
     );
   },
+  async about(ctx) {
+    return {
+      status: true,
+    };
+  },
+  async update(ctx) {
+    // const { id } = ctx.params;
+    const cid = ctx.query.StatementId;
+    const request = parseRequest(ctx.request);
+    const statements = { ...request.body };
+    const validate = validateStatements(statements);
+    if (validate.status !== true) {
+      return ctx.badRequest(
+        null,
+        formatError({
+          id: "Statement Validate - Error",
+          message: validate.message,
+        })
+      );
+    }
+    let entity;
+    if (ctx.is("multipart")) {
+      const { data, files } = parseMultipartData(ctx);
+      entity = await strapi.services.statement.update({ cid }, data, {
+        files,
+      });
+    } else {
+      entity = await strapi.services.statement.update(
+        { cid },
+        ctx.request.body
+      );
+    }
+
+    return sanitizeEntity(entity, { model: strapi.models.statement });
+  },
 };

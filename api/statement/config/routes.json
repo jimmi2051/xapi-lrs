@@ -34,7 +34,7 @@
     },
     {
       "method": "PUT",
-      "path": "/xapi/statements/:id",
+      "path": "/xapi/statements",
       "handler": "statement.update",
       "config": {
         "policies": []
@@ -44,6 +44,14 @@
       "method": "DELETE",
       "path": "/xapi/statements/:id",
       "handler": "statement.delete",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/xapi/about",
+      "handler": "statement.about",
       "config": {
         "policies": []
       }
