@@ -156,9 +156,6 @@ module.exports = {
         data.authority._id = entryAuthor.id;
       }
     }
-    if (_.isEmpty(data.stored)) {
-      data.stored = Date.now();
-    }
     const entry = await strapi.query("statement").create(data);
 
     if (files) {
@@ -360,24 +357,22 @@ module.exports = {
         validData.authority._id = entryAuthor.id;
       }
     }
-    if (_.isEmpty(validData.stored)) {
-      validData.stored = Date.now();
-    }
-    console.log("params ==?", params);
+    // console.log("params ==?", params);
 
     validData.object_activity = validData.object_activity._id.toString();
-    console.log("validData ==>", validData);
-    const entry = await strapi.query("statement").update(params, validData);
-    console.log("entry ==>", entry);
+    // console.log("validData ==>", validData);
+    const insStatement = await strapi
+      .query("statement")
+      .findOne({ cid: params.cid });
+    const entry = await strapi
+      .query("statement")
+      .update({ id: insStatement.id }, validData);
     if (files) {
-      // automatically uploads the files based on the entry and the model
       await strapi.entityService.uploadFiles(entry, files, {
         model: "statement",
-        // if you are using a plugin's model you will have to add the `source` key (source: 'users-permissions')
       });
       return this.findOne({ id: entry.id });
     }
-
     return entry;
   },
 };

@@ -183,7 +183,7 @@ const validateSubstatement = (subStatement) => {
       message: "Cannot nest a SubStatement inside of another SubStatement",
     };
   } else {
-    subStatement.objectType = "Activity";
+    subStatement.object.objectType = "Activity";
   }
   let isValidateAgent = validateAgent(subStatement.actor, "actor");
   if (isValidateAgent.status === false) {
@@ -441,6 +441,42 @@ const validateContext = (context, stmt_object) => {
       const isValidate = validateIRI(key);
       if (isValidate.status === false) {
         return isValidate;
+      }
+    }
+  }
+  if (context.contextActivities) {
+    if (!_.isObject(context.contextActivities)) {
+      return {
+        status: false,
+        message: "contextActivities must be a dictionary",
+      };
+    }
+    const contextActivityTypes = ["parent", "grouping", "category", "other"];
+    for (let key in context.contextActivities) {
+      if (!contextActivityTypes.includes(key)) {
+        return {
+          status: false,
+          message: "Context activity type is not invalid",
+        };
+      }
+      const value = context.contextActivities[key];
+      if (_.isArray(value)) {
+        for (let act of value) {
+          const isValidate = validateActivity(act);
+          if (isValidate.status === false) {
+            return isValidate;
+          }
+        }
+      } else if (_.isObject(value)) {
+        const isValidate = validateActivity(value);
+        if (isValidate.status === false) {
+          return isValidate;
+        }
+      } else {
+        return {
+          status: false,
+          message: "contextActivities is not formatted correctly",
+        };
       }
     }
   }
