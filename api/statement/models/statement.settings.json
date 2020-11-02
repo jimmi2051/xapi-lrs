@@ -10,23 +10,20 @@
   },
   "attributes": {
     "object_agent": {
-      "via": "object_statements",
-      "model": "agent"
+      "model": "agent",
+      "via": "object_statements"
     },
     "object_activity": {
-      "via": "object_statements",
-      "model": "activity"
+      "model": "activity",
+      "via": "object_statements"
     },
     "object_substatement": {
       "via": "object_statements",
       "model": "substatement"
     },
-    "object_statementref": {
-      "type": "uid"
-    },
     "actor": {
-      "via": "actor_statements",
-      "model": "agent"
+      "model": "agent",
+      "via": "actor_statements"
     },
     "verb": {
       "model": "verb",
@@ -66,8 +63,8 @@
       "type": "datetime"
     },
     "authority": {
-      "via": "authority_statements",
-      "model": "agent"
+      "model": "agent",
+      "via": "authority_statements"
     },
     "voided": {
       "type": "boolean"
@@ -76,12 +73,12 @@
       "type": "string"
     },
     "context_instructor": {
-      "via": "context_instructor_statements",
-      "model": "agent"
+      "model": "agent",
+      "via": "context_instructor_statements"
     },
     "context_team": {
-      "via": "context_team_statements",
-      "model": "agent"
+      "model": "agent",
+      "via": "context_team_statements"
     },
     "context_revision": {
       "type": "string"
@@ -96,23 +93,23 @@
       "type": "json"
     },
     "context_ca_parent": {
-      "via": "context_ca_parent_statements",
       "collection": "activity",
+      "via": "context_ca_parent_statements",
       "dominant": true
     },
     "context_ca_grouping": {
-      "via": "context_ca_grouping_statements",
       "collection": "activity",
+      "via": "context_ca_grouping_statements",
       "dominant": true
     },
     "context_ca_categories": {
-      "via": "context_ca_category_statements",
       "collection": "activity",
+      "via": "context_ca_category_statements",
       "dominant": true
     },
     "context_ca_other": {
-      "via": "context_ca_other_statements",
       "collection": "activity",
+      "via": "context_ca_other_statements",
       "dominant": true
     },
     "context_statement": {
@@ -126,6 +123,9 @@
       "type": "json"
     },
     "cid": {
+      "type": "string"
+    },
+    "object_statementref": {
       "type": "string"
     }
   }

@@ -37,24 +37,24 @@
       "via": "members"
     },
     "object_statements": {
-      "collection": "statement",
-      "via": "object_agent"
+      "via": "object_agent",
+      "collection": "statement"
     },
     "actor_statements": {
-      "collection": "statement",
-      "via": "actor"
+      "via": "actor",
+      "collection": "statement"
     },
     "authority_statements": {
-      "collection": "statement",
-      "via": "authority"
+      "via": "authority",
+      "collection": "statement"
     },
     "context_instructor_statements": {
-      "collection": "statement",
-      "via": "context_instructor"
+      "via": "context_instructor",
+      "collection": "statement"
     },
     "context_team_statements": {
-      "collection": "statement",
-      "via": "context_team"
+      "via": "context_team",
+      "collection": "statement"
     },
     "cid": {
       "type": "string"

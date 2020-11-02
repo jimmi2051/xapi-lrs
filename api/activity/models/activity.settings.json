@@ -23,24 +23,24 @@
       "via": "user_activity"
     },
     "object_statements": {
-      "collection": "statement",
-      "via": "object_activity"
+      "via": "object_activity",
+      "collection": "statement"
     },
     "context_ca_parent_statements": {
-      "collection": "statement",
-      "via": "context_ca_parent"
+      "via": "context_ca_parent",
+      "collection": "statement"
     },
     "context_ca_grouping_statements": {
-      "collection": "statement",
-      "via": "context_ca_grouping"
+      "via": "context_ca_grouping",
+      "collection": "statement"
     },
     "context_ca_category_statements": {
-      "collection": "statement",
-      "via": "context_ca_categories"
+      "via": "context_ca_categories",
+      "collection": "statement"
     },
     "context_ca_other_statements": {
-      "collection": "statement",
-      "via": "context_ca_other"
+      "via": "context_ca_other",
+      "collection": "statement"
     },
     "cid": {
       "type": "string"

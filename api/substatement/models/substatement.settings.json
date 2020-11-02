@@ -9,9 +9,6 @@
     "timestamps": true
   },
   "attributes": {
-    "object_statementref": {
-      "type": "uid"
-    },
     "user": {
       "plugin": "users-permissions",
       "model": "user",
@@ -70,6 +67,9 @@
       "via": "object_substatement"
     },
     "cid": {
+      "type": "string"
+    },
+    "object_statementref": {
       "type": "string"
     }
   }
