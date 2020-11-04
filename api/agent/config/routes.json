@@ -2,7 +2,7 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/agents",
+      "path": "/xapi/agents",
       "handler": "agent.find",
       "config": {
         "policies": []
@@ -10,7 +10,7 @@
     },
     {
       "method": "GET",
-      "path": "/agents/count",
+      "path": "/xapi/agents/count",
       "handler": "agent.count",
       "config": {
         "policies": []
@@ -18,7 +18,7 @@
     },
     {
       "method": "GET",
-      "path": "/agents/:id",
+      "path": "/xapi/agents/:id",
       "handler": "agent.findOne",
       "config": {
         "policies": []
@@ -26,7 +26,7 @@
     },
     {
       "method": "POST",
-      "path": "/agents",
+      "path": "/xapi/agents",
       "handler": "agent.create",
       "config": {
         "policies": []
@@ -34,7 +34,7 @@
     },
     {
       "method": "PUT",
-      "path": "/agents/:id",
+      "path": "/xapi/agents/:id",
       "handler": "agent.update",
       "config": {
         "policies": []
@@ -42,8 +42,40 @@
     },
     {
       "method": "DELETE",
-      "path": "/agents/:id",
+      "path": "/xapi/agents/:id",
       "handler": "agent.delete",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/xapi/agents/profile",
+      "handler": "agent.getProfile",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/xapi/agents/profile",
+      "handler": "agent.createProfile",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/xapi/agents/profile",
+      "handler": "agent.updateProfile",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/xapi/agents/profile",
+      "handler": "agent.deleteProfile",
       "config": {
         "policies": []
       }

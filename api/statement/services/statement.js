@@ -219,6 +219,10 @@ module.exports = {
       params["_sort"] = "stored:asc";
       delete params.ascending;
     }
+    if (params.descending) {
+      params["_sort"] = "stored:desc";
+      delete params.descending;
+    }
     if (params.format) {
       delete params.format;
     }
