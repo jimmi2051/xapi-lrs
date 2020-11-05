@@ -7,7 +7,7 @@
 
 module.exports = {
   async getState(ctx) {
-    ctx.status = 200;
+    ctx.status = 400;
     return ctx;
   },
   async createState(ctx) {
@@ -19,6 +19,22 @@ module.exports = {
     return ctx;
   },
   async updateState(ctx) {
+    ctx.status = 400;
+    return ctx;
+  },
+  async getActivityByProfile(ctx) {
+    ctx.status = 400;
+    return ctx;
+  },
+  async createActivityByProfile(ctx) {
+    ctx.status = 204;
+    return ctx;
+  },
+  async updateActivityByProfile(ctx) {
+    ctx.status = 400;
+    return ctx;
+  },
+  async deleteActivityByProfile(ctx) {
     ctx.status = 400;
     return ctx;
   },

@@ -79,6 +79,38 @@
       "config": {
         "policies": []
       }
+    },
+    {
+      "method": "GET",
+      "path": "/xapi/activities/profile",
+      "handler": "activity.getActivityByProfile",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/xapi/activities/profile",
+      "handler": "activity.createActivityByProfile",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/xapi/activities/profile",
+      "handler": "activity.updateActivityByProfile",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/xapi/activities/profile",
+      "handler": "activity.deleteActivityByProfile",
+      "config": {
+        "policies": []
+      }
     }
   ]
 }

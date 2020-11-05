@@ -7,7 +7,6 @@
 
 module.exports = {
   find(params, populate) {
-    console.log("parsm ==>", params);
     if (params.agent) {
       const agent = JSON.parse(params.agent);
       params.name = agent.name;

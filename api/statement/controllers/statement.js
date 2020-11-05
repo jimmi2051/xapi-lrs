@@ -80,7 +80,7 @@ module.exports = {
         ctx.request.body
       );
     }
-
+    ctx.status = 204;
     return sanitizeEntity(entity, { model: strapi.models.statement });
   },
 };

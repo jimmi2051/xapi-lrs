@@ -59,7 +59,7 @@ module.exports = {
     );
   },
   async getProfile(ctx) {
-    ctx.status = 200;
+    ctx.status = 400;
     return ctx;
   },
   async createProfile(ctx) {

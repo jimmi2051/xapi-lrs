@@ -22,6 +22,19 @@ const parseRequest = (request, moreId = null) => {
 
   return rObj;
 };
+const parseCorsRequest = (request, rObj) => {
+  try {
+    rObj.method = request.query.method.toLowerCase();
+  } catch {
+    return "Could not find method parameter for CORS request";
+  }
+  if (Object.keys(request.query).length > 1) {
+    return "CORS must only include method in query string parameters";
+  }
+  rObj.body = request.body;
+  rObj.params = request.body;
+};
+
 const parseNormalRequest = (request, rObj) => {
   if (request.method === "POST" || request.method === "PUT") {
     if (rObj.headers.contentType) {
